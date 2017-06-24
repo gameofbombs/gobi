@@ -1,0 +1,35 @@
+{
+    "compilerOptions": {
+        "outFile": "./dist/gobi.js",
+        "sourceMap": true,
+        "inlineSources": true,
+        "removeComments": false,
+        "allowJs": true,
+        "target": "es5",
+        "lib": [
+            "DOM",
+            "ES5",
+            "ScriptHost",
+            "es2015.promise"
+        ],
+        "module": "amd",
+        "noImplicitAny": true,
+        "noLib": false,
+        "preserveConstEnums": false,
+        "moduleResolution": "node",
+        "noFallthroughCasesInSwitch": false,
+        "noImplicitReturns": true,
+        "allowUnreachableCode": true,
+        "typeRoots": [
+            "typings/",
+            "node_modules/@types"
+        ]
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "./tmp/**/*",
+        "./src/apps/predefined/**/*"
+    ]
+}

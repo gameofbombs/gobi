@@ -1,0 +1,3 @@
+interface UniqIdMarked {
+	uniqId:number;
+}

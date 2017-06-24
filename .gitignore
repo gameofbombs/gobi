@@ -1,0 +1,5 @@
+node_modules
+/dist
+
+# jetBrains IDE ignores
+.idea

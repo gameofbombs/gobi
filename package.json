@@ -1,0 +1,30 @@
+{
+  "name": "gobi",
+  "version": "0.1.0",
+  "description": "pixijs typescript fork",
+  "main": "dist/gobi.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gameofbombs/gobi.git"
+  },
+  "keywords": [
+    "pixijs",
+    "webgl"
+  ],
+  "author": "Ivan Popelyshev",
+  "contributors": [
+    "Ivan Popelyshev",
+    "Mike Busyrev",
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/gameofbombs/gobi/issues"
+  },
+  "homepage": "https://github.com/gameofbombs/gobi#readme",
+  "dependencies": {
+    "typescript": "^2.4.0"
+  }
+}
