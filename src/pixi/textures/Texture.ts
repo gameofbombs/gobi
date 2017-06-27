@@ -217,8 +217,10 @@ namespace gobi.pixi {
 			return this.orig.height;
 		}
 
-		static EMPTY : Texture = new Texture(new BaseTexture());
-		static WHITE : Texture = new Texture(createWhiteBaseTexture());
+		static EMPTY = new Texture(new BaseTexture());
+		static WHITE = new Texture(createWhiteTexture());
+
+		static fromImage = cache.newTextureFromImg;
 	}
 
 	function emptyFunction() {
@@ -228,7 +230,7 @@ namespace gobi.pixi {
 	emptySignal.addListener = emptyFunction;
 	emptySignal.removeListener = emptyFunction;
 
-	function createWhiteBaseTexture() {
+	function createWhiteTexture() {
 		const canvas = document.createElement('canvas');
 
 		canvas.width = 10;

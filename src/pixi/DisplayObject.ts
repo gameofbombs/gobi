@@ -4,6 +4,7 @@
 namespace gobi.pixi {
 	import IDisplayObject = gobi.core.IDisplayObject;
 	import Node = gobi.core.Node;
+	import Bounds = gobi.core.Bounds;
 
 	class DefaultNodeRenderer implements gobi.core.INodeRenderer {
 		renderWebGL(renderer: WebGLRenderer, target: Node) {
@@ -39,6 +40,10 @@ namespace gobi.pixi {
 
 		destroy(options: any) {
 			this.destroyed = true;
+		}
+
+		calculateBounds(bounds: Bounds) {
+
 		}
 	}
 }

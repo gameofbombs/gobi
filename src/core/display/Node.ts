@@ -13,6 +13,8 @@ namespace gobi.core {
 		tintRgba = new Float32Array(fourOnes);
 		worldTintRgba = new Float32Array(fourOnes);
 
+		visualBounds : NodeBounds = new NodeBounds(this);
+
 		// onChildrenChange = new Signal<(index: number) => void>();
 
 		constructor(displayObject: IDisplayObject = null) {
@@ -221,7 +223,7 @@ namespace gobi.core {
 		updater: NodeUpdateQueue = this.parentCollection.updateContext;
 
 		invalidate(mask: number) {
-			if (this.uFlags == 0) {
+			if ((this.uFlags | this.uFlagsPushed) === 0) {
 				this.updater.invalidateNode(this);
 			}
 			this.uFlags |= mask;
@@ -242,7 +244,7 @@ namespace gobi.core {
 
 			// starting transform
 			if ((compMask & COMPONENT_BITS.TRANSFORM) !== 0) {
-				const parentTransform = (parentStop & COMPONENT_BITS.TRANSFORM) !== 0 ? parent.transform : Transform.IDENTITY;
+				const parentTransform = (parentStop & COMPONENT_BITS.TRANSFORM) === 0 ? parent.transform : Transform.IDENTITY;
 				this.transform.updateTransform(parentTransform);
 			}
 
@@ -250,7 +252,7 @@ namespace gobi.core {
 			if ((compMask & COMPONENT_BITS.ALPHATINT) !== 0) {
 				const lt = this.tintRgba;
 				const wt = this.worldTintRgba;
-				if ((parentStop & COMPONENT_BITS.ALPHATINT) !== 0) {
+				if ((parentStop & COMPONENT_BITS.ALPHATINT) === 0) {
 					const pt = parent.worldTintRgba;
 					wt[0] = pt[0] * lt[0];
 					wt[1] = pt[1] * lt[1];
@@ -339,7 +341,7 @@ namespace gobi.core {
 			let stack = updater.tempParentStack;
 			stack.length = 0;
 			while (node !== null &&
-			(maxCtxUpdateId > 0 && node.lastCtxUpdateID < maxCtxUpdateId)) {
+			(maxCtxUpdateId <= 0 || node.lastCtxUpdateID < maxCtxUpdateId)) {
 				stack.push(node);
 				node = node.parent;
 			}

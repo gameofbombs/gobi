@@ -1,8 +1,9 @@
 namespace gobi.pixi {
 	import IDisposable = gobi.core.IDisposable;
 	import IPoint = gobi.core.IPoint;
+	import Bounds = gobi.core.Bounds;
 	export class SpriteDisplayObject extends DisplayObject implements AnchoredDisplayObject {
-		constructor(texture: Texture) {
+		constructor(texture?: Texture) {
 			super();
 			this.texture = texture || Texture.EMPTY;
 		}
@@ -17,7 +18,7 @@ namespace gobi.pixi {
 		_textureTrimmedID = -1;
 
 		vertexData = new Float32Array(8);
-		vertexTrimmedData = new Float32Array(8);
+		vertexTrimmedData : Float32Array = null;
 
 		pluginName = 'sprite';
 
@@ -99,6 +100,59 @@ namespace gobi.pixi {
 			vertexData[7] = (d * h0) + (b * w1) + ty;
 		}
 
+		calculateTrimmedVertices()
+		{
+			const transform = this.node.transform;
+			if (!this.vertexTrimmedData)
+			{
+				this.vertexTrimmedData = new Float32Array(8);
+			}
+			else if (this._transformTrimmedID === transform._worldID && this._textureTrimmedID === this._texture._updateID)
+			{
+				return;
+			}
+
+			this._transformTrimmedID = transform._worldID;
+			this._textureTrimmedID = this._texture._updateID;
+
+			// lets do some special trim code!
+			const texture = this._texture;
+			const vertexData = this.vertexTrimmedData;
+			const orig = texture.orig;
+			const anchor = this._anchor;
+
+			// lets calculate the new untrimmed bounds..
+			const wt = transform.worldTransform;
+			const a = wt.a;
+			const b = wt.b;
+			const c = wt.c;
+			const d = wt.d;
+			const tx = wt.tx;
+			const ty = wt.ty;
+
+			const w1 = -anchor._x * orig.width;
+			const w0 = w1 + orig.width;
+
+			const h1 = -anchor._y * orig.height;
+			const h0 = h1 + orig.height;
+
+			// xy
+			vertexData[0] = (a * w1) + (c * h1) + tx;
+			vertexData[1] = (d * h1) + (b * w1) + ty;
+
+			// xy
+			vertexData[2] = (a * w0) + (c * h1) + tx;
+			vertexData[3] = (d * h1) + (b * w0) + ty;
+
+			// xy
+			vertexData[4] = (a * w0) + (c * h0) + tx;
+			vertexData[5] = (d * h0) + (b * w0) + ty;
+
+			// xy
+			vertexData[6] = (a * w1) + (c * h0) + tx;
+			vertexData[7] = (d * h0) + (b * w1) + ty;
+		}
+
 		renderWebGL(renderer: WebGLRenderer) {
 			this.calculateVertices();
 
@@ -159,6 +213,26 @@ namespace gobi.pixi {
 
 		set anchor(value: IPoint) {
 			this._anchor.copyFrom(value);
+		}
+
+		calculateBounds(bounds: Bounds)
+		{
+			const trim = this._texture.trim;
+			const orig = this._texture.orig;
+
+			// First lets check to see if the current texture has a trim..
+			if (!trim || (trim.width === orig.width && trim.height === orig.height))
+			{
+				// no trim! lets use the usual calculations..
+				this.calculateVertices();
+				bounds.addQuad(this.vertexData);
+			}
+			else
+			{
+				// lets calculate a special trimmed bounds...
+				this.calculateTrimmedVertices();
+				bounds.addQuad(this.vertexTrimmedData);
+			}
 		}
 	}
 }

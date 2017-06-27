@@ -107,11 +107,53 @@ namespace gobi.pixi {
 		worldVisible: boolean = null;
 
 		getBounds(): Rectangle {
-			return Rectangle.EMPTY;
+			this.updateBubble(COMPONENT_BITS.TRANSFORM);
+			this.updateRecursive(COMPONENT_BITS.TRANSFORM, 2);
+
+			return this.visualBounds.getBounds();
 		}
 
 		getLocalBounds(): Rectangle {
-			return Rectangle.EMPTY;
+			this.updateBubble(COMPONENT_BITS.TRANSFORM);
+			this.updateRecursive(COMPONENT_BITS.TRANSFORM, 2);
+
+			return this.visualBounds.getLocalBounds();
+		}
+
+		_width = 0;
+		_height = 0;
+
+		get width(): number {
+			return this.scale.x * this.getLocalBounds().width;
+		}
+
+		get height(): number {
+			return this.scale.y * this.getLocalBounds().height;
+		}
+
+		set width(value: number) {
+			const cur = this.getLocalBounds().width;
+
+			if (cur !== 0) {
+				this.scale.x = value / cur;
+			}
+			else {
+				this.scale.x = 1;
+			}
+
+			this._width = value;
+		}
+
+		set height(value: number) {
+			const cur = this.getLocalBounds().height;
+			if (cur !== 0) {
+				this.scale.y = value / cur;
+			}
+			else {
+				this.scale.y = 1;
+			}
+
+			this._height = value;
 		}
 
 		/**

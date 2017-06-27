@@ -269,8 +269,10 @@ namespace gobi.core {
 
 	export interface IDisplayObject extends IDisposable, INodeRenderer {
 		node: Node;
-		visible : boolean;
-		renderable : boolean;
+		visible: boolean;
+		renderable: boolean;
+
+		calculateBounds(bounds: Bounds): void;
 	}
 
 	export interface INodeRenderer {

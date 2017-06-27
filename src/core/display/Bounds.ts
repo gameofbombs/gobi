@@ -284,5 +284,19 @@ namespace gobi.core {
                 this.maxY = _maxY > maxY ? _maxY : maxY;
             }
         }
+
+        addTuple(x: number, y: number) {
+            this.minX = Math.min(this.minX, x);
+            this.maxX = Math.max(this.maxX, x);
+            this.minY = Math.min(this.minY, y);
+            this.maxY = Math.max(this.maxY, y);
+        }
+
+        ceil() {
+            this.minX = Math.floor(this.minX);
+            this.minY = Math.floor(this.minY);
+            this.maxX = Math.ceil(this.maxX);
+            this.maxY = Math.ceil(this.maxY);
+        }
     }
 }
