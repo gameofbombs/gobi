@@ -2,6 +2,7 @@ namespace gobi.core {
 
     export interface IShape {
         type: number;
+        contains(x: number, y: number): boolean;
     }
 
     /**
@@ -16,7 +17,7 @@ namespace gobi.core {
         y: number;
         width: number;
         height: number;
-        type: number = 1;
+        type: number = SHAPES.RECT;
 
         /**
          * @param {number} [x=0] - The X coordinate of the upper-left corner of the rectangle
@@ -32,8 +33,6 @@ namespace gobi.core {
             this.width = width;
 
             this.height = height;
-
-            this.type = 1;
         }
 
         /**

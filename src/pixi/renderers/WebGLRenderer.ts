@@ -1,3 +1,6 @@
+///ts:ref=SystemRenderer
+/// <reference path="./SystemRenderer.ts"/> ///ts:ref:generated
+
 namespace gobi.pixi {
 	import runner = gobi.core.runner;
 	import UniformGroupCast = gobi.core.UniformGroupCast;

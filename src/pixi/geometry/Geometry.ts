@@ -72,7 +72,7 @@ namespace gobi.pixi {
 		 *
 		 * @return {PIXI.mesh.Geometry} returns self, useful for chaining.
 		 */
-		addAttribute(id: string, buffer: GeometryBuffer, size: number, normalised = false, type: gobi.core.TYPES, stride?: number, start?: number, instance = 0) {
+		addAttribute(id: string, buffer: GeometryBuffer, size?: number, normalised = false, type?: gobi.core.TYPES, stride?: number, start?: number, instance = 0) {
 			if (!buffer) {
 				throw new Error('You must pass a buffer when creating an attribute');
 			}

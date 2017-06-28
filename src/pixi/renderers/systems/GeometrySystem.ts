@@ -311,7 +311,7 @@ namespace gobi.pixi.systems {
 			}
 		}
 
-		draw(type: number, size: number, start: number, instanceCount: number) {
+		draw(type: number, size: number, start?: number, instanceCount?: number) {
 			const gl = this.gl;
 			const geometry = this._activeGeometry;
 
