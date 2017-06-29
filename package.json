@@ -4,7 +4,7 @@
   "description": "pixijs typescript fork",
   "main": "dist/gobi.js",
   "scripts": {
-    "build": "tsc"
+    "build": "grunt"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,10 @@
     "url": "https://github.com/gameofbombs/gobi/issues"
   },
   "homepage": "https://github.com/gameofbombs/gobi#readme",
-  "dependencies": {
-    "typescript": "^2.4.0"
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "typescript": "^2.4.0",
+    "grunt-ts": "6.0.0-beta.16",
+    "time-grunt": "^1.4.0"
   }
 }
