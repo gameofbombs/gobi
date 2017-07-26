@@ -628,37 +628,6 @@ namespace gobi.loaders {
 		}
 
 		/**
-		 * Loads this resources using an XDomainRequest. This is here because we need to support IE9 (gross).
-		 *
-		 * @private
-		 */
-		_loadXdr() {
-			// if unset, determine the value
-			if (typeof this.xhrType !== 'string') {
-				this.xhrType = this._determineXhrType();
-			}
-
-			const xdr = this.xhr = new XDomainRequest();
-
-			// XDomainRequest has a few quirks. Occasionally it will abort requests
-			// A way to avoid this is to make sure ALL callbacks are set even if not used
-			// More info here: http://stackoverflow.com/questions/15786966/xdomainrequest-aborts-post-on-ie-9
-			xdr.timeout = 5000;
-
-			xdr.onerror = this._xhrOnError;
-			xdr.onprogress = this._onProgress;
-			xdr.onload = this._xhrOnLoad;
-
-			xdr.open('GET', this.url, true);
-
-			// Note: The xdr.send() call is wrapped in a timeout to prevent an
-			// issue with the interface where some requests are lost if multiple
-			// XDomainRequests are being sent at the same time.
-			// Some info here: https://github.com/photonstorm/phaser/issues/1248
-			setTimeout(() => xdr.send(), 1);
-		}
-
-		/**
 		 * Creates a source used in loading via an element.
 		 *
 		 * @private

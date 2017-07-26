@@ -17,7 +17,7 @@ namespace gobi.loaders {
 		 *
 		 * @member {string}
 		 */
-		baseUrl: Url;
+		baseUrl: url.Url;
 
 		/**
 		 * The progress percent of the loader going through the queue.

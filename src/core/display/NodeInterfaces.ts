@@ -172,7 +172,7 @@ namespace gobi.core {
 		}
 
 		newStageError(str: string) {
-			return new PandaError(str);
+			return new Error(str);
 		}
 
 		detachSubtree(subtree: Node): void {

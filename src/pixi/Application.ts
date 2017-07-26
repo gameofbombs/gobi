@@ -43,8 +43,6 @@ namespace gobi.pixi {
 		 * @param {boolean} [options.sharedLoader=false] - `true` to use PIXI.loaders.shared, `false` to create new Loader.
 		 */
 		constructor(options: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
-			Initializer(true);
-
 			// Support for constructor(width, height, options, noWebGL, useSharedTicker)
 			if (typeof options === 'number') {
 				options = (Object as any).assign({
@@ -72,7 +70,7 @@ namespace gobi.pixi {
 			 * @member {PIXI.ticker.Ticker}
 			 * @default PIXI.ticker.shared
 			 */
-			this.ticker = /*options.sharedTicker ? shared :*/ new PandaTicker(true);
+			this.ticker = /*options.sharedTicker ? shared :*/ new PandaTicker();
 
 			// Start the rendering
 			this.start();

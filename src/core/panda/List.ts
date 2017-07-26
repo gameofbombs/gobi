@@ -1,4 +1,6 @@
 class List<T> {
+	private static _ITERATOR_POOL:Array<ListIterator<any>> = [];
+	public static _ITERATOR_POOL_MAX:number = 1000;
 	public constructor(name:string) {
 		this.$name = name;
 	}
@@ -6,6 +8,7 @@ class List<T> {
 	private _head:ListNode<T> = null;
 	private _tail:ListNode<T> = null;
 	public $name:string = null;
+	
 
 	public getHead(): ListIterator<T> {
 		let head = this.findValidHead();
@@ -53,6 +56,7 @@ class List<T> {
 		while (!iterator.getEnded()) {
 			if (iterator.getValue() === searchable) {
 				iterator.destroy();
+				this.$returnIteratorToPool(iterator);
 				return true;
 			}
 			iterator.prev();
@@ -92,7 +96,27 @@ class List<T> {
 	}
 
 	private getIteratorForNode<T>(node:ListNode<T>) {
-		return new ListIterator<T>(node, this.$name);
+		let pool = List._ITERATOR_POOL;
+		if (pool.length) {
+			let iter = pool.pop();
+			iter.$reSetup(node, this.$name);
+			GlobalInstanceChecker.watch(iter);
+			return iter;
+		} else {
+			return new ListIterator<T>(node, this.$name);
+		}
+	}
+	
+	public $returnIteratorToPool(iter:ListIterator<T>) {
+		if (iter.getIsValid()) {
+			throw new Error('Attempt to return valid iterator to pool');
+		}
+		if (List._ITERATOR_POOL.length >= List._ITERATOR_POOL_MAX) {
+			// do nothing with iter
+			return;
+		}
+		GlobalInstanceChecker.unWatch(iter);
+		List._ITERATOR_POOL.push(iter);
 	}
 
 	private addAfter(insertableNode:ListNode<T>, node:ListNode<T>= null):void {
@@ -148,6 +172,10 @@ class List<T> {
 	}
 
 	public $removeNode(node:ListNode<T>):void {
+		if (node.getIsValid()) {
+		}
+		if (node.getRefCounter() !== 0) {
+		}
 		let prev = node.prev;
 		if (prev) {
 			prev.next = node.next;
@@ -214,8 +242,21 @@ class ListNode<T> {
 	}
 }
 
-class ListIterator<T> {
+class ListIterator<T> implements UniqIdMarked {
 	public constructor(node:ListNode<T>, listName:string) {
+		this.uniqId = UniqIdGenerator.getUniq();
+		this._listName = listName;
+		GlobalInstanceChecker.watch(this);
+		this.setNode(node);
+	}
+	
+	public uniqId:number;
+	
+	public unWatch():void {
+		GlobalInstanceChecker.unWatch(this);
+	}
+	
+	public $reSetup(node:ListNode<T>, listName:string):void {
 		this._listName = listName;
 		this.setNode(node);
 	}
