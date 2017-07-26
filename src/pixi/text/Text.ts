@@ -6,8 +6,7 @@ namespace gobi.pixi {
 
 		constructor(text: string, style?: TextStyleOptions, canvas?: HTMLCanvasElement) {
 			super();
-			this.gobiText = new TextDisplayObject(text, style, canvas);
-			this.gobiText.node = this;
+			this.gobiText = new TextDisplayObject(this, text, style, canvas);
 			this.displayObject = this.gobiText;
 		}
 
@@ -94,6 +93,22 @@ namespace gobi.pixi {
 
 			scale.y = s * value / elem._texture.orig.height;
 			this._height = value;
+		}
+
+		get text() {
+			return this.gobiText._text;
+		}
+
+		set text(value: string) {
+			this.gobiText.text = value;
+		}
+
+		get dirty() {
+			return this.gobiText.dirty;
+		}
+
+		set dirty(value: boolean) {
+			this.gobiText.dirty = true;
 		}
 	}
 }

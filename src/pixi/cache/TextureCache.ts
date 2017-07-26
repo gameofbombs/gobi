@@ -1,4 +1,5 @@
 namespace gobi.pixi.cache {
+	import ImageResource = gobi.core.ImageResource;
 	export const baseTextureCache: { [key: string]: BaseTexture } = {};
 	export const textureCache: { [key: string]: Texture } = {};
 
@@ -15,7 +16,34 @@ namespace gobi.pixi.cache {
 		return baseTex;
 	}
 
-	function removeBaseTexFromCache(baseTexture: BaseTexture) {
+	export function addBaseTextureToCache(baseTexture: BaseTexture, cacheId: string): boolean {
+		const cachedValue = baseTextureCache[cacheId];
+		if (cachedValue && cachedValue !== baseTexture) {
+			// console.warn(`BaseTexture added to the cache with an id [${id}] that already had an entry`);
+			// return cachedValue;
+			return false;
+		}
+
+		baseTexture._cacheId = cacheId;
+		baseTexture._cacheId = cacheId;
+		baseTextureCache[cacheId] = baseTexture;
+		baseTexture.onDispose.addListener(removeBaseTexFromCache);
+		return true;
+	}
+
+	export function addTextureToCache(texture: Texture, cacheId: string): boolean {
+		const cachedValue = textureCache[cacheId];
+		if (cachedValue && cachedValue !== texture) {
+			// console.warn(`BaseTexture added to the cache with an id [${id}] that already had an entry`);
+			// return cachedValue;
+			return false;
+		}
+
+		textureCache[cacheId] = texture;
+		return true;
+	}
+
+	export function removeBaseTexFromCache(baseTexture: BaseTexture) {
 		delete this.baseTextureCache[baseTexture._cacheId];
 		const tex = this.textureCache[baseTexture._cacheId];
 		if (tex) {
@@ -26,7 +54,7 @@ namespace gobi.pixi.cache {
 		}
 	}
 
-	function removeTextureFromCache(texture: Texture) {
+	export function removeTextureFromCache(texture: Texture) {
 		const cacheId = texture.baseTexture._cacheId;
 		if (!cacheId) return;
 

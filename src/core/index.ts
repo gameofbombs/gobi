@@ -1,3 +1,7 @@
+interface Navigator {
+	isCocoonJS: boolean
+}
+
 /**
  * @namespace PIXI
  */

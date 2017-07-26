@@ -2,7 +2,7 @@ namespace gobi.glCore {
 	let context: WebGLRenderingContext = null;
 
 	export function getTestContext() {
-		if (context) {
+		if (context && !context.isContextLost()) {
 			return context;
 		}
 

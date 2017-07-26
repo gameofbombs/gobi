@@ -15,7 +15,7 @@ namespace gobi.pixi {
 		program: Program;
 		uniformGroup: UniformGroup;
 
-		constructor(program: Program, uniforms: any) {
+		constructor(program: Program, uniforms?: any) {
 			this.program = program;
 
 			// lets see whats been passed in

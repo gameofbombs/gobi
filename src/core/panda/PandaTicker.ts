@@ -5,6 +5,7 @@ namespace gobi.panda {
 
         constructor() {
             this.onEnterFrame = new Signal<(millisecondsDelta: number, millisecondsAbsolute: number) => void>();
+            this.lastTimeStamp = performance.now();
         }
 
         onEnterFrame: Signal<(millisecondsDelta: number, millisecondsAbsolute: number) => void> = null;

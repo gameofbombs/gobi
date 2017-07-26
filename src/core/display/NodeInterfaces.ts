@@ -1,15 +1,23 @@
+///ts:ref=LayerCollection
+/// <reference path="../layers/LayerCollection.ts"/> ///ts:ref:generated
+
 namespace gobi.core {
 	export enum COMPONENT_BITS {
 		//8 bits reserved by engine
 		TRANSFORM = 1,
 		ALPHATINT = 2,
 		DISPLAY = 4,
-		BIT_3 = 8,
+		CULL = 8,
 		BIT_4 = 16,
 		BIT_5 = 32,
 		BIT_6 = 64,
 		BIT_7 = 128,
 		//everything else is for callbacks
+	}
+
+	export enum CULL_BITS {
+		VISIBLE = 1,
+		RENDERABLE = 2
 	}
 
 	export class NodeUpdateQueue {
@@ -111,7 +119,7 @@ namespace gobi.core {
 		 *
 		 * @param compMask
 		 */
-		update(compMask?: number): number;
+		updateNode(compMask?: number): number;
 
 		/**
 		 * updates node and propagates flags to children
@@ -152,6 +160,8 @@ namespace gobi.core {
 		detachedSet: { [key: number]: Node } = [];
 		private tempQueueStack: Array<Array<Node>> = [];
 
+		layers = new LayerCollection(this);
+
 		allocateQueue() {
 			return this.tempQueueStack.pop() || [];
 		}
@@ -162,7 +172,7 @@ namespace gobi.core {
 		}
 
 		newStageError(str: string) {
-			return new Error(str);
+			return new PandaError(str);
 		}
 
 		detachSubtree(subtree: Node): void {
@@ -195,15 +205,8 @@ namespace gobi.core {
 			q.push(subtree);
 			for (let i = 0; i < q.length; i++) {
 				let x = q[i];
-
-				if (x.parentCollection !== this) {
-					x.parentCollection = this;
-					x.updater = this.updateContext;
-					x.lastCtxUpdateID = -1;
-					//TODO: add to stage event
-				} else {
-					delete dSet[x.uniqId];
-				}
+				this.innerAddNode(x);
+				delete dSet[x.uniqId];
 				aSet[x.uniqId] = x;
 
 				for (let j = 0; j < x.children.length; j++) {
@@ -235,12 +238,32 @@ namespace gobi.core {
 			this.tempQueueStack.push(q);
 		}
 
-		private innerRemoveNode(node: Node) {
-			if (node.parentCollection !== this) {
-				// already removed
+		private innerAddNode(node: Node) {
+			if (node.parentCollection === this) {
 				return;
 			}
-			//TODO: removed from stage event
+
+			node.parentCollection = this;
+			node.updater = this.updateContext;
+			node.lastCtxUpdateID = -1;
+
+			//add rare components here
+			if (node.layer) {
+				this.layers.add(node.layer);
+			}
+
+			node.onAdded.emit(node, this);
+		}
+
+		private innerRemoveNode(node: Node) {
+			if (node.parentCollection !== this) {
+				return;
+			}
+
+			if (node.layer) {
+				this.layers.remove(node.layer);
+			}
+			node.onRemoved.emit(node, this);
 			node.parentCollection = nullCollection;
 			node.updater = nullCollection.updateContext;
 		}
@@ -269,15 +292,13 @@ namespace gobi.core {
 
 	export interface IDisplayObject extends IDisposable, INodeRenderer {
 		node: Node;
-		visible: boolean;
-		renderable: boolean;
 
 		calculateBounds(bounds: Bounds): void;
+
+		containsPoint?(p: IPoint): boolean;
 	}
 
 	export interface INodeRenderer {
 		renderWebGL(renderer: gobi.pixi.WebGLRenderer, target: Node): void;
 	}
-
-
 }

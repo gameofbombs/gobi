@@ -9,6 +9,10 @@ namespace gobi.pixi {
 		_glBuffers: { [key: number]: GLBuffer } = {};
 		_updateID = 0;
 
+		onDispose = new Signal<(buffer: GeometryBuffer) => void>();
+
+		//TODO: shared buffer?
+
 		/**
 		 * @param {ArrayBuffer| SharedArrayBuffer|ArrayBufferView} data the data to store in the buffer.
 		 */
@@ -39,9 +43,9 @@ namespace gobi.pixi {
 		 * Destroys the buffer
 		 */
 		destroy() {
-			for (let i in this._glBuffers) {
-				this._glBuffers[i].destroy();
-			}
+			//its managed, renderers will take care of it
+			this.onDispose.emit(this);
+			this.onDispose.clear();
 
 			this.data = null;
 		}

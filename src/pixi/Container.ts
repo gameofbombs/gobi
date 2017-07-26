@@ -1,5 +1,7 @@
 ///ts:ref=DisplayObject
 /// <reference path="./DisplayObject.ts"/> ///ts:ref:generated
+///ts:ref=Node
+/// <reference path="../core/display/Node.ts"/> ///ts:ref:generated
 
 namespace gobi.pixi {
 	import Node = gobi.core.Node;
@@ -161,6 +163,74 @@ namespace gobi.pixi {
 		 */
 		updateTransform() {
 			this.updateRecursive(3);
+		}
+
+		addChild(...child: Array<Container>) {
+			// if (child instanceof Array) {
+			for (let i = 0; i < child.length; ++i) {
+				super.addChild(child[i]);
+			}
+			// } else if (arguments.length > 1) {
+			//
+			// } else {
+			// 	super.addChild(child);
+			// }
+		}
+
+		//TODO: toLocal, toGlobal
+
+		toGlobal(position: IPoint, point: IPoint, skipUpdate?: boolean) {
+			if (!skipUpdate) {
+				this.updateBubble(COMPONENT_BITS.TRANSFORM);
+			}
+
+			// don't need to update the lot
+			return this.worldTransform.apply(position, point);
+		}
+
+		/**
+		 * Calculates the local position of the display object relative to another point
+		 *
+		 * @param {PIXI.Point} position - The world origin to calculate from
+		 * @param {PIXI.DisplayObject} [from] - The DisplayObject to calculate the global position from
+		 * @param {PIXI.Point} [point] - A Point object in which to store the value, optional
+		 *  (otherwise will create a new Point)
+		 * @param {boolean} [skipUpdate=false] - Should we skip the update transform
+		 * @return {PIXI.Point} A point object representing the position of this object
+		 */
+		toLocal(position: IPoint, from: Container, point: IPoint, skipUpdate?: boolean) {
+			if (from) {
+				position = from.toGlobal(position, point, skipUpdate);
+			}
+
+			if (!skipUpdate) {
+				this.updateBubble(COMPONENT_BITS.TRANSFORM);
+			}
+
+			// simply apply the matrix..
+			return this.worldTransform.applyInverse(position, point);
+		}
+
+		//==== EVENT EMITTER ====
+
+		on(type: interaction.EventTypes, cb: (event: interaction.Event) => void) {
+			this.events.on(type, cb);
+			return this;
+		}
+
+		off(type: interaction.EventTypes, cb: (event: interaction.Event) => void) {
+			this.events.off(type, cb);
+			return this;
+		}
+
+		once(type: interaction.EventTypes, cb: (event: interaction.Event) => void) {
+			this.events.once(type, cb);
+			return this;
+		}
+
+		emit(type: interaction.EventTypes, ev: interaction.Event) {
+			this.events.emit(type, ev);
+			return this;
 		}
 	}
 }

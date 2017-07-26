@@ -3,7 +3,7 @@ namespace gobi.core {
 	export interface IPoint {
 		x: number;
 		y: number;
-		set(x: number, y: number): void;
+		set(x: number, y?: number): void;
 		copyFrom(p: IPoint): void;
 		clonePoint(): Point;
 	}
@@ -36,7 +36,7 @@ namespace gobi.core {
 			return (p.x === this.x) && (p.y === this.y);
 		}
 
-		set(_x: number, _y: number) {
+		set(_x: number, _y?: number) {
 			this.x = _x || 0;
 			this.y = _y || ((_y !== 0) ? this.x : 0);
 		}

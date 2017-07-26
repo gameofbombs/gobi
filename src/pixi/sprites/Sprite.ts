@@ -8,8 +8,7 @@ namespace gobi.pixi {
 
 		constructor(texture: Texture) {
 			super();
-			this.gobiSprite = new SpriteDisplayObject(texture);
-			this.gobiSprite.node = this;
+			this.gobiSprite = new SpriteDisplayObject(this, texture);
 			this.displayObject = this.gobiSprite;
 		}
 
@@ -35,7 +34,10 @@ namespace gobi.pixi {
 		}
 
 		set blendMode(value: BlendMode) {
-			this.gobiSprite.blendMode = value;
+			if (typeof value === 'number')
+				this.gobiSprite.blendMode = BlendMode.values[value as number];
+			else
+				this.gobiSprite.blendMode = value;
 		}
 
 		get pluginName(): string {
@@ -44,6 +46,32 @@ namespace gobi.pixi {
 
 		set pluginName(value: string) {
 			this.gobiSprite.pluginName = value;
+		}
+
+		get width()
+		{
+			return Math.abs(this.scale.x) * this.gobiSprite._texture.orig.width;
+		}
+
+		set width(value) // eslint-disable-line require-jsdoc
+		{
+			const s = utils.sign(this.scale.x) || 1;
+
+			this.scale.x = s * value / this.gobiSprite._texture.orig.width;
+			this._width = value;
+		}
+
+		get height()
+		{
+			return Math.abs(this.scale.y) * this.gobiSprite._texture.orig.height;
+		}
+
+		set height(value)
+		{
+			const s = utils.sign(this.scale.y) || 1;
+
+			this.scale.y = s * value / this.gobiSprite._texture.orig.height;
+			this._height = value;
 		}
 
 		static fromImage(src: string) {

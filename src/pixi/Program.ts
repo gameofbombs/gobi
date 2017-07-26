@@ -7,9 +7,11 @@ namespace gobi.pixi {
 	import shaderUtils = gobi.glCore.shaderUtils;
 	import getTestContext = gobi.glCore.getTestContext;
 	import ProgramCache = gobi.utils.ProgramCache;
-	let UID = 0;
 
-	export class Program {
+	export class Program implements UniqIdMarked {
+		uniqId = UniqIdGenerator.getUniq();
+		onDispose = new Signal<(program: Program) => void>();
+
 		vertexSrc: string = "";
 
 		fragmentSrc: string = "";
@@ -18,8 +20,6 @@ namespace gobi.pixi {
 		glShaders: { [key: number]: GLShader } = {};
 
 		syncUniforms: UniformGroup = null;
-
-		id: number = UID++;
 
 		constructor(vertexSrc?: string, fragmentSrc?: string) {
 			/**
@@ -42,6 +42,11 @@ namespace gobi.pixi {
 
 		attributeData: any = null;
 		uniformData: any = null;
+
+		dispose() {
+			this.onDispose.emit(this);
+			this.onDispose.clear();
+		}
 
 		/**
 		 * Extracts the data for a buy creating a small test program

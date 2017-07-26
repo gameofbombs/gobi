@@ -23,6 +23,7 @@ namespace gobi.pixi {
 		renderer: WebGLRenderer;
 		stage: Stage;
 		_ticker: PandaTicker = null;
+		interaction: interaction.Manager;
 
 		// eslint-disable-next-line valid-jsdoc
 		/**
@@ -42,6 +43,8 @@ namespace gobi.pixi {
 		 * @param {boolean} [options.sharedLoader=false] - `true` to use PIXI.loaders.shared, `false` to create new Loader.
 		 */
 		constructor(options: any, arg2?: any, arg3?: any, arg4?: any, arg5?: any) {
+			Initializer(true);
+
 			// Support for constructor(width, height, options, noWebGL, useSharedTicker)
 			if (typeof options === 'number') {
 				options = (Object as any).assign({
@@ -60,6 +63,8 @@ namespace gobi.pixi {
 
 			this.renderer = new WebGLRenderer(options);
 
+			this.interaction = new interaction.Manager(this.renderer);
+
 			this.stage = new Stage();
 
 			/**
@@ -67,7 +72,7 @@ namespace gobi.pixi {
 			 * @member {PIXI.ticker.Ticker}
 			 * @default PIXI.ticker.shared
 			 */
-			this.ticker = /*options.sharedTicker ? shared :*/ new PandaTicker();
+			this.ticker = /*options.sharedTicker ? shared :*/ new PandaTicker(true);
 
 			// Start the rendering
 			this.start();
@@ -77,10 +82,12 @@ namespace gobi.pixi {
 		{
 			if (this._ticker) {
 				this._ticker.onEnterFrame.removeListener(this.render);
+				this._ticker.onEnterFrame.removeListener(this.interact);
 			}
 			this._ticker = ticker;
 			if (ticker) {
-				ticker.onEnterFrame.addListener(this.render);
+				ticker.onEnterFrame.addListener(this.render, UPDATE_PRIORITY.LOW);
+				ticker.onEnterFrame.addListener(this.interact, UPDATE_PRIORITY.INTERACTION);
 			}
 		}
 
@@ -94,6 +101,10 @@ namespace gobi.pixi {
 		 */
 		render = () => {
 			this.renderer.render(this.stage);
+		};
+
+		interact = (millisecondsDelta: number) => {
+			this.interaction.update(millisecondsDelta);
 		};
 
 		/**

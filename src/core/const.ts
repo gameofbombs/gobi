@@ -282,4 +282,18 @@ namespace gobi.core {
 		LINEAR_VERTICAL = 0,
 		LINEAR_HORIZONTAL = 1,
 	}
+
+	export enum DEPTH_MODE {
+		DEFAULT = 0,
+		FRONT_TO_BACK = 1,
+		BACK_TO_FRONT = 2
+	}
+
+	export const UPDATE_PRIORITY = {
+		INTERACTION: 50,
+		HIGH: 25,
+		NORMAL: 0,
+		LOW: -25,
+		UTILITY: -50,
+	};
 }

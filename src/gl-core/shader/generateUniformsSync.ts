@@ -153,12 +153,11 @@ namespace gobi.glCore.shaderUtils {
                 cv = ud.${i}.value;
                 v = uv.${i};
 
-                    if(cv[0] !== v[0] || cv[1] !== v[1])
-                    {
-                        cv[0] = v[0];
-                        cv[1] = v[1];
-                        gl.uniform2f(ud.${i}.location, v[0], v[1]);
-                    }
+                if(cv[0] !== v[0] || cv[1] !== v[1])
+                {
+                    cv[0] = v[0];
+                    cv[1] = v[1];
+                    gl.uniform2f(ud.${i}.location, v[0], v[1]);
                 }\n`;
 				}
 			}

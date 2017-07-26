@@ -2,9 +2,13 @@ namespace gobi.pixi {
 	import IDisposable = gobi.core.IDisposable;
 	import IPoint = gobi.core.IPoint;
 	import Bounds = gobi.core.Bounds;
+
+	const tempPoint = new core.Point();
+
 	export class SpriteDisplayObject extends DisplayObject implements AnchoredDisplayObject {
-		constructor(texture?: Texture) {
+		constructor(node: Container, texture?: Texture) {
 			super();
+			this.node = node;
 			this.texture = texture || Texture.EMPTY;
 		}
 
@@ -28,7 +32,16 @@ namespace gobi.pixi {
 			this._textureID = -1;
 			this._textureTrimmedID = -1;
 
-			//width height
+			let node = this.node;
+			if (node._width)
+			{
+				node.scale.x = utils.sign(node.scale.x) * node._width / this._texture.orig.width;
+			}
+
+			if (node._height)
+			{
+				node.scale.y = utils.sign(node.scale.y) * node._height / this._texture.orig.height;
+			}
 		};
 
 		_onAnchorUpdate() {
@@ -233,6 +246,28 @@ namespace gobi.pixi {
 				this.calculateTrimmedVertices();
 				bounds.addQuad(this.vertexTrimmedData);
 			}
+		}
+
+		containsPoint(point: IPoint)
+		{
+			this.node.transform.worldTransform.applyInverse(point, tempPoint);
+
+			const width = this._texture.orig.width;
+			const height = this._texture.orig.height;
+			const x1 = -width * this.anchor.x;
+			let y1 = 0;
+
+			if (tempPoint.x > x1 && tempPoint.x < x1 + width)
+			{
+				y1 = -height * this.anchor.y;
+
+				if (tempPoint.y > y1 && tempPoint.y < y1 + height)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 	}
 }

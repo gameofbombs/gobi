@@ -10,6 +10,7 @@ namespace gobi.pixi.systems {
 
 	import GLState = gobi.glCore.GLState;
 	import GLAttribState = gobi.glCore.GLAttribState;
+	import DEPTH_MODE = gobi.core.DEPTH_MODE;
 
 	/**
 	 * A WebGL state machines
@@ -200,6 +201,35 @@ namespace gobi.pixi.systems {
 			this.setBlendMode(BlendMode.NORMAL);
 
 			this.setState(this.defaultState);
+		}
+
+		//hacks!
+
+		depthMode = DEPTH_MODE.DEFAULT;
+
+		setDepthMode(value: number) {
+			if (value === this.depthMode) {
+				return;
+			}
+			this.renderer.batch.flush();
+			//TODO: move to renderTarget?
+			const gl = this.gl;
+			if (value === DEPTH_MODE.FRONT_TO_BACK) {
+				gl.enable(gl.DEPTH_TEST);
+				gl.depthFunc(gl.LEQUAL);
+				gl.depthRange(-1, 1);
+				gl.clear(gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
+
+				gl.colorMask(false, false, false, false);
+				gl.depthMask(true);
+			} else if (value === DEPTH_MODE.BACK_TO_FRONT) {
+				gl.enable(gl.DEPTH_TEST);
+				gl.colorMask(true, true, true, true);
+				gl.depthMask(false);
+			} else {
+				gl.disable(gl.DEPTH_TEST);
+			}
+			this.depthMode = value;
 		}
 	}
 }

@@ -84,6 +84,7 @@ namespace gobi.pixi.systems {
 
 			if (gl) {
 				this.webGLVersion = 2;
+				glCore.FLOATING_POINT_AVAILABLE = 2;
 			}
 			else {
 				this.webGLVersion = 1;
@@ -112,12 +113,14 @@ namespace gobi.pixi.systems {
 			if (this.webGLVersion === 1) {
 				extensions.drawBuffers = gl.getExtension('WEBGL_draw_buffers');
 				extensions.depthTexture = gl.getExtension('WEBKIT_WEBGL_depth_texture');
-				extensions.floatTexture = gl.getExtension('OES_texture_float');
 				extensions.loseContext = gl.getExtension('WEBGL_lose_context');
+				extensions.floatTexture = gl.getExtension('OES_texture_float');
 
 				extensions.vertexArrayObject = gl.getExtension('OES_vertex_array_object')
 					|| gl.getExtension('MOZ_OES_vertex_array_object')
 					|| gl.getExtension('WEBKIT_OES_vertex_array_object');
+			} else {
+				extensions.floatTexture = gl.getExtension('WEBGL_color_buffer_float');
 			}
 
 			// we don't use any specific WebGL 2 ones yet!
@@ -129,18 +132,18 @@ namespace gobi.pixi.systems {
 		 * @private
 		 * @param {WebGLContextEvent} event - The context lost event.
 		 */
-		handleContextLost(event: WebGLContextEvent) {
+		handleContextLost = (event: WebGLContextEvent) => {
 			event.preventDefault();
-		}
+		};
 
 		/**
 		 * Handles a restored webgl context
 		 *
 		 * @private
 		 */
-		handleContextRestored() {
+		handleContextRestored = () => {
 			this.renderer.runners.contextChange.run(this.gl);
-		}
+		};
 
 		destroy() {
 			const view = this.renderer.view;

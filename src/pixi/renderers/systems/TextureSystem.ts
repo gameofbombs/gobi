@@ -25,10 +25,10 @@ namespace gobi.pixi.systems {
 		currentLocation = -1;
 		CONTEXT_UID: number;
 
-		managedTextures: Array<BaseTexture> = [];
 		emptyTextures: { [key: number]: GLTexture } = {};
 
 		gl: WebGLRenderingContext;
+		compressedExtensions: any;
 
 		/**
 		 * Sets up the renderer context and necessary buffers.
@@ -36,6 +36,8 @@ namespace gobi.pixi.systems {
 		 * @private
 		 */
 		contextChange() {
+			this.removeAll(true);
+
 			const gl = this.gl = this.renderer.gl;
 
 			this.CONTEXT_UID = this.renderer.CONTEXT_UID;
@@ -59,6 +61,25 @@ namespace gobi.pixi.systems {
 
 			for (i = 0; i < this.boundTextures.length; i++) {
 				this.bind(null, i);
+			}
+
+			let oldCompressed = this.compressedExtensions;
+			this.compressedExtensions = null;
+
+			if (oldCompressed) {
+				this.initCompressed();
+			}
+		}
+
+		initCompressed() {
+			const gl = this.gl;
+			if (!this.compressedExtensions) {
+				this.compressedExtensions = {
+					dxt: gl.getExtension("WEBGL_compressed_texture_s3tc"),
+					pvrtc: gl.getExtension("WEBGL_compressed_texture_pvrtc"),
+					atc: gl.getExtension("WEBGL_compressed_texture_atc")
+				};
+				this.compressedExtensions.crn = this.compressedExtensions.dxt;
 			}
 		}
 
@@ -107,21 +128,6 @@ namespace gobi.pixi.systems {
 					this.boundTextures[i] = null;
 				}
 			}
-		}
-
-		initTexture(texture: BaseTexture) {
-			const glTexture = new GLTexture(this.gl, -1, -1, texture.format, texture.type);
-
-			glTexture.premultiplyAlpha = texture.premultiplyAlpha;
-			// guarentee an update..
-			glTexture._updateID = -1;
-
-			texture._glTextures[this.CONTEXT_UID] = glTexture;
-
-			this.managedTextures.push(texture);
-			texture.onDispose.addListener(this.destroyTexture);
-
-			return glTexture;
 		}
 
 		updateTexture(texture: BaseTexture) {
@@ -225,30 +231,40 @@ namespace gobi.pixi.systems {
 		}
 
 
+		managedTextures: { [key: number]: BaseTexture } = [];
+
+		initTexture(texture: BaseTexture) {
+			const glTexture = new GLTexture(this.gl, -1, -1, texture.format, texture.type);
+
+			glTexture.premultiplyAlpha = texture.premultiplyAlpha;
+			// guarentee an update..
+			glTexture._updateID = -1;
+
+			texture._glTextures[this.CONTEXT_UID] = glTexture;
+
+			this.managedTextures[texture.uniqId] = texture;
+			texture.onDispose.addListener(this.destroyTexture);
+
+			return glTexture;
+		}
+
 		/**
 		 * Deletes the texture from WebGL
 		 *
 		 * @param {PIXI.BaseTexture|PIXI.Texture} texture - the texture to destroy
-		 * @param {boolean} [skipRemove=false] - Whether to skip removing the texture from the TextureManager.
 		 */
-		destroyTexture = (texture: BaseTexture, skipRemove: boolean = false) => {
+		destroyTexture = (texture: BaseTexture, contextLost: boolean = false) => {
 			texture = (texture as any).baseTexture || texture;
+			delete this.managedTextures[texture.uniqId];
 
 			if (texture._glTextures[this.renderer.CONTEXT_UID]) {
-				this.unbind(texture);
-
-				texture._glTextures[this.renderer.CONTEXT_UID].destroy();
+				if (!contextLost) {
+					this.unbind(texture);
+					texture._glTextures[this.renderer.CONTEXT_UID].destroy();
+				}
 				texture.onDispose.removeListener(this.destroyTexture);
 
 				delete texture._glTextures[this.renderer.CONTEXT_UID];
-
-				if (!skipRemove) {
-					const i = this.managedTextures.indexOf(texture);
-
-					if (i !== -1) {
-						gobi.utils.removeItems(this.managedTextures, i, 1);
-					}
-				}
 			}
 		};
 
@@ -268,6 +284,17 @@ namespace gobi.pixi.systems {
 			}
 
 			gl.texParameteri(texture.target, gl.TEXTURE_MAG_FILTER, texture.scaleMode ? gl.LINEAR : gl.NEAREST);
+		}
+
+		//TODO: this is needed for context loss
+		removeAll(contextLost: boolean = false) {
+			for (let i = 0; i < this.boundTextures.length; i++) {
+				this.boundTextures[i] = null;
+			}
+			let all = Object.keys(this.managedTextures);
+			for (let key of all) {
+				this.destroyTexture(this.managedTextures[key as any], contextLost);
+			}
 		}
 	}
 }

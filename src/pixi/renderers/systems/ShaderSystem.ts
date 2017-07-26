@@ -6,6 +6,7 @@ namespace gobi.pixi.systems {
 
 	export class ShaderSystem extends BaseSystem {
 		gl: WebGLRenderingContext = null;
+		CONTEXT_UID: number;
 
 		shader: Shader = null;
 		program: Program = null;
@@ -15,7 +16,10 @@ namespace gobi.pixi.systems {
 		}
 
 		contextChange(gl: WebGLRenderingContext) {
+			this.removeAll(true);
 			this.gl = gl;
+			this.CONTEXT_UID = this.renderer.CONTEXT_UID;
+			this.program = null;
 		}
 
 		/**
@@ -30,7 +34,7 @@ namespace gobi.pixi.systems {
 			shader.uniforms.globals = this.renderer.globalUniforms;
 
 			const program = shader.program;
-			const glShader = program.glShaders[this.renderer.CONTEXT_UID] || this.generateShader(shader);
+			const glShader = program.glShaders[this.renderer.CONTEXT_UID] || this.generateShader(program);
 
 			this.shader = shader;
 
@@ -64,16 +68,16 @@ namespace gobi.pixi.systems {
 
 			if (!group._static || group.dirtyId !== glShader.uniformGroups[group.id]) {
 				glShader.uniformGroups[group.id] = group.dirtyId;
-				const syncFunc = group.syncUniforms[this.shader.program.id] || this.createSyncGroups(group) as any;
+				const syncFunc = group.syncUniforms[this.shader.program.uniqId] || this.createSyncGroups(group) as any;
 
 				syncFunc(glShader.uniformData, group.uniforms, this.renderer);
 			}
 		}
 
 		createSyncGroups(group: UniformGroup) {
-			group.syncUniforms[this.shader.program.id] = generateUniformsSync(group, this.shader.program.uniformData);
+			group.syncUniforms[this.shader.program.uniqId] = generateUniformsSync(group, this.shader.program.uniformData);
 
-			return group.syncUniforms[this.shader.program.id];
+			return group.syncUniforms[this.shader.program.uniqId];
 		}
 
 		/**
@@ -97,8 +101,7 @@ namespace gobi.pixi.systems {
 		 * @param {PIXI.Shader} shader the shader that the glShader will be based on.
 		 * @return {PIXI.glCore.GLShader} A shiney new GLShader
 		 */
-		generateShader(shader: Shader) {
-			const program = shader.program;
+		generateShader(program: Program) {
 			const attribMap: any = {};
 
 			// insert the global properties too!
@@ -115,6 +118,9 @@ namespace gobi.pixi.systems {
 
 			program.glShaders[this.renderer.CONTEXT_UID] = glShader;
 
+			this.managedPrograms[program.uniqId] = program;
+			program.onDispose.addListener(this.destroyProgram);
+
 			return glShader;
 		}
 
@@ -126,6 +132,28 @@ namespace gobi.pixi.systems {
 		destroy() {
 			// TODO implement destroy method for ShaderSystem
 			this.destroyed = true;
+		}
+
+		managedPrograms: { [key: number]: Program } = {};
+
+		destroyProgram = (program: Program, contextLost: boolean = false) => {
+			delete this.managedPrograms[program.uniqId];
+
+			let glShader = program.glShaders[this.CONTEXT_UID];
+			if (glShader) {
+				if (!contextLost) {
+					this.gl.deleteProgram(glShader.program);
+				}
+				program.onDispose.removeListener(this.destroyProgram);
+				delete program.glShaders[this.CONTEXT_UID];
+			}
+		};
+
+		removeAll(contextLost: boolean = false) {
+			let all = Object.keys(this.managedPrograms);
+			for (let key of all) {
+				this.destroyProgram(this.managedPrograms[key as any], contextLost);
+			}
 		}
 	}
 }

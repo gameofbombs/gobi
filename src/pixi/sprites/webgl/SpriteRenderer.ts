@@ -184,8 +184,12 @@ namespace gobi.pixi.sprites {
 				nextTexture = sprite._texture.baseTexture;
 				textureId = nextTexture._batchId;
 
-				if (blendMode !== sprite.blendMode) {
-					blendMode = sprite.blendMode;
+				const spriteBlendMode = sprite.blendMode.npm[Number(nextTexture.premultiplyAlpha)];
+
+				if (blendMode !== spriteBlendMode)
+				{
+					// finish a group..
+					blendMode = spriteBlendMode;
 
 					// force the batch to break!
 					currentTexture = null;

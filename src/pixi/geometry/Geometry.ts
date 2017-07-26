@@ -1,7 +1,7 @@
 namespace gobi.pixi {
 	import VertexArrayObject = gobi.glCore.VertexArrayObject;
 	import IDisposable = gobi.core.IDisposable;
-	const byteSizeMap : any = {5126: 4, 5123: 2, 5121: 1};
+	const byteSizeMap: any = {5126: 4, 5123: 2, 5121: 1};
 	let UID = 0;
 
 	/* eslint-disable object-shorthand */
@@ -41,6 +41,7 @@ namespace gobi.pixi {
 		glVertexArrayObjects: { [key: number]: any } = {};
 
 		uniqId = UniqIdGenerator.getUniq();
+		onDispose = new Signal<(geom: Geometry) => void>();
 
 		instanced = false;
 
@@ -203,15 +204,11 @@ namespace gobi.pixi {
 		 * Destroys the geometry.
 		 */
 		destroy() {
-			for (let i in this.glVertexArrayObjects) {
-				this.glVertexArrayObjects[i].destroy();
-			}
+			//its managed now!
+			this.onDispose.emit(this);
+			//TODO: remove buffers that were used only in this geom
 
 			this.glVertexArrayObjects = null;
-
-			for (let i = 0; i < this.buffers.length; i++) {
-				this.buffers[i].destroy();
-			}
 
 			this.buffers = null;
 			this.indexBuffer.destroy();

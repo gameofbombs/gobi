@@ -79,7 +79,6 @@ namespace gobi.pixi {
 		clone(): GraphicsDisplayObject {
 			const clone = new GraphicsDisplayObject();
 
-			clone.renderable = this.renderable;
 			clone.fillAlpha = this.fillAlpha;
 			clone.lineWidth = this.lineWidth;
 			clone.lineColor = this.lineColor;

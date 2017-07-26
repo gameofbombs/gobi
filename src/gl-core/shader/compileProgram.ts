@@ -30,6 +30,7 @@ namespace gobi.glCore.shaderUtils {
 
 		// if linking fails, then log and cleanup
 		if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+			//TODO: panda console here
 			console.error('Pixi.js Error: Could not initialize shader.');
 			console.error('gl.VALIDATE_STATUS', gl.getProgramParameter(program, gl.VALIDATE_STATUS));
 			console.error('gl.getError()', gl.getError());

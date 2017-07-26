@@ -194,7 +194,9 @@ namespace gobi.pixi {
 
 	export const URL_FILE_EXTENSION = gobi.core.URL_FILE_EXTENSION;
 
-	export const DATA_URI = gobi.core.DATA_URI
+	export const DATA_URI = gobi.core.DATA_URI;
 
 	export const SVG_SIZE = gobi.core.SVG_SIZE;
+
+	export const UPDATE_PRIORITY = gobi.core.UPDATE_PRIORITY;
 }

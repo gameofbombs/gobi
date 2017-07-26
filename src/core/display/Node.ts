@@ -10,10 +10,16 @@ namespace gobi.core {
 		parent: TNode = null;
 		parentCollection: NodeCollection = nullCollection;
 		children: Array<TNode> = [];
+		//TODO: move it to renderSession
 		tintRgba = new Float32Array(fourOnes);
 		worldTintRgba = new Float32Array(fourOnes);
 
-		visualBounds : NodeBounds = new NodeBounds(this);
+		visualBounds: NodeBounds = new NodeBounds(this);
+		view: View = new View(this);
+		layer: Layer = null;
+
+		onAdded = new Signal<(elem: Node, collection: NodeCollection) => void>();
+		onRemoved = new Signal<(elem: Node, collection: NodeCollection) => void>();
 
 		// onChildrenChange = new Signal<(index: number) => void>();
 
@@ -41,14 +47,14 @@ namespace gobi.core {
 			this._addChildInner(child);
 			this.children.push(child);
 			// this.onChildrenChange(this.children.length - 1);
-			//child.emit('added', this);
+			// child.emit('added', this);
 		}
 
 		addChildAt(child: TNode, index: number): void {
 			this._addChildInner(child);
 			this.children.splice(index, 0, child);
 			//this.onChildrenChange(index);
-			//child.emit('added', this);
+			// child.emit('added', this);
 		}
 
 		swapChildren(child1: TNode, child2: TNode): void {
@@ -223,14 +229,15 @@ namespace gobi.core {
 		updater: NodeUpdateQueue = this.parentCollection.updateContext;
 
 		invalidate(mask: number) {
-			if ((this.uFlags | this.uFlagsPushed) === 0) {
-				this.updater.invalidateNode(this);
-			}
+			const inv = (this.uFlags | this.uFlagsPushed) === 0;
 			this.uFlags |= mask;
 			this.updater.uFlags |= mask;
+			if (inv) {
+				this.updater.invalidateNode(this);
+			}
 		}
 
-		update(compMask: number): number {
+		updateNode(compMask: number): number {
 			compMask &= this.uFlags | this.uFlagsParent;
 
 			if (compMask == 0) {
@@ -250,6 +257,7 @@ namespace gobi.core {
 
 			// tint
 			if ((compMask & COMPONENT_BITS.ALPHATINT) !== 0) {
+				//updates tinting component, it actually belongs more to material
 				const lt = this.tintRgba;
 				const wt = this.worldTintRgba;
 				if ((parentStop & COMPONENT_BITS.ALPHATINT) === 0) {
@@ -266,6 +274,15 @@ namespace gobi.core {
 				}
 			}
 
+			if ((compMask & COMPONENT_BITS.CULL) !== 0) {
+				//updates tinting component, it actually belongs more to material
+				if ((parentStop & COMPONENT_BITS.CULL) === 0) {
+					this.worldCullFlags = parent.worldCullFlags | this.cullFlags;
+				} else {
+					this.worldCullFlags = this.cullFlags;
+				}
+			}
+
 			this.uFlags &= ~compMask;
 			this.uFlagsParent &= ~compMask;
 			this.uFlagsChildren |= resMask & ~this.uFlagsStop;
@@ -274,7 +291,7 @@ namespace gobi.core {
 		}
 
 		updateWithChildren(compMask: number = -1): void {
-			this.update(compMask);
+			this.updateNode(compMask);
 
 			const children = this.children;
 			const len = children.length;
@@ -294,7 +311,7 @@ namespace gobi.core {
 			if (mode == 3) {
 				this.uFlagsParent |= compMask;
 			}
-			this.update(compMask);
+			this.updateNode(compMask);
 
 			const children = this.children;
 			const len = children.length;
@@ -320,6 +337,10 @@ namespace gobi.core {
 			updater.flushUpdateFlags();
 			const ctxUpdateId = updater.updateID;
 
+			if ((this.worldCullFlags & CULL_BITS.VISIBLE) !== 0) {
+				return ctxUpdateId;
+			}
+
 			let node: Node = this;
 			let stack = updater.tempParentStack;
 			stack.length = 0;
@@ -332,7 +353,7 @@ namespace gobi.core {
 				stack[i].updateRecursive(-1, 1);
 			}
 
-			return 0;
+			return ctxUpdateId;
 		}
 
 		updateBubble(compMask: number = -1, maxCtxUpdateId: number = 0): void {
@@ -385,6 +406,50 @@ namespace gobi.core {
 				}
 			}
 		}
+
+		//==== CULLING COMPONENT ====
+		cullFlags: number = 0;
+		worldCullFlags: number = 0;
+
+		get visible() {
+			// also, turns off updates
+			return (this.cullFlags & CULL_BITS.VISIBLE) === 0;
+		}
+
+		set visible(value: boolean) {
+			let cur = (this.cullFlags & CULL_BITS.VISIBLE) === 0;
+			if (cur !== value) {
+				this.cullFlags ^= CULL_BITS.VISIBLE;
+				if (value) {
+					// turns on updates back
+					this.updater.invalidateNode(this);
+				}
+			}
+		}
+
+		get renderable() {
+			return (this.cullFlags & CULL_BITS.RENDERABLE) === 0;
+		}
+
+		set renderable(value: boolean) {
+			let cur = (this.cullFlags & CULL_BITS.RENDERABLE) === 0;
+			if (cur !== value) {
+				this.cullFlags ^= CULL_BITS.RENDERABLE;
+				this.invalidate(COMPONENT_BITS.CULL);
+			}
+		}
+
+		//==== INTERACTION COMPONENT ====
+		//TODO: how to do mixin in TS properly to merge classes?
+		//TODO: optional component? two less objects
+
+		events = new interaction.Events();
+		hitArea: core.IShape = null;
+		_mask: Node = null;
+		interactiveChildren = true;
+		interactive = true;
+		trackedPointers: { [key: string]: interaction.TrackingData } = {};
+		cursor: string = null;
 	}
 
 	export class Node extends NodeBase<Node> {

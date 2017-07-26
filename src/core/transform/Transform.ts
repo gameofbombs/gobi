@@ -101,8 +101,10 @@ namespace gobi.core {
 			const pt = parentTransform.worldTransform;
 			const wt = this.worldTransform;
 			const lt = this.localTransform;
-			if (this._localID !== this._currentLocalID && this.autoUpdateLocal) {
-				this.flat.update(false);
+			if (this._localID !== this._currentLocalID) {
+				if (this.autoUpdateLocal) {
+					this.flat.update(false);
+				}
 				this._currentLocalID = this._localID;
 			}
 			wt.setToMult(pt, lt);

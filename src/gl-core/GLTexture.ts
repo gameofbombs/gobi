@@ -15,7 +15,7 @@ interface ImageBitmap extends ITextureSource {
 }
 
 namespace gobi.glCore {
-	let FLOATING_POINT_AVAILABLE = false;
+	export let FLOATING_POINT_AVAILABLE = 0;
 	/**
 	 * Helper class to create a WebGL Texture
 	 *
@@ -193,17 +193,20 @@ namespace gobi.glCore {
 
 			const gl = this.gl;
 
+			let format2 = this.format;
 
 			if (data instanceof Float32Array) {
-				if (!FLOATING_POINT_AVAILABLE) {
+				if (FLOATING_POINT_AVAILABLE === 0) {
 					var ext = gl.getExtension("OES_texture_float");
 
 					if (ext) {
-						FLOATING_POINT_AVAILABLE = true;
+						FLOATING_POINT_AVAILABLE = 1;
 					}
 					else {
 						throw new Error('floating point textures not available');
 					}
+				} else if (FLOATING_POINT_AVAILABLE === 2) {
+					format2 = (gl as any).RGBA32F;
 				}
 
 				this.type = gl.FLOAT;
@@ -218,7 +221,7 @@ namespace gobi.glCore {
 
 
 			if (width !== this.width || height !== this.height) {
-				gl.texImage2D(gl.TEXTURE_2D, 0, this.format, width, height, 0, this.format, this.type, data || null);
+				gl.texImage2D(gl.TEXTURE_2D, 0, format2, width, height, 0, this.format, this.type, data || null);
 			}
 			else {
 				gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, width, height, this.format, this.type, data || null);
@@ -363,7 +366,7 @@ namespace gobi.glCore {
 			texture.upload(source);
 
 			return texture;
-		};
+		}
 
 		/**
 		 * @static
@@ -372,7 +375,7 @@ namespace gobi.glCore {
 		 * @param width {number} the new width of the texture
 		 * @param height {number} the new height of the texture
 		 */
-		static fromData = function (gl: WebGLRenderingContext, data: ArrayBufferView, width: number, height: number) {
+		static fromData(gl: WebGLRenderingContext, data: ArrayBufferView, width: number, height: number) {
 			//console.log(data, width, height);
 			const texture = new GLTexture(gl);
 			texture.uploadData(data, width, height);
@@ -380,5 +383,56 @@ namespace gobi.glCore {
 			return texture;
 		}
 
+		uploadFloatTexturePartial(offset: number, buf: Float32Array) {
+			this.bind();
+			const gl = this.gl;
+			const width = this.width;
+
+			gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.premultiplyAlpha);
+
+			let row1 = (offset >> 2) / width | 0;
+			const col1 = (offset >> 2) % width | 0;
+			const offset1 = col1 > 0 ? (width - col1) << 2 : 0;
+
+			const row2 = ((offset + buf.length) >> 2) / width | 0;
+			const col2 = ((offset + buf.length) >> 2) % width | 0;
+			const offset2 = buf.length - (col2 << 2);
+
+			if (row1 === row2) {
+				gl.texSubImage2D(
+					gl.TEXTURE_2D, 0,
+					col1, row1,
+					col2 - col1, 1,
+					gl.RGBA, gl.FLOAT, buf
+				);
+				return;
+			}
+
+			if (col1 > 0) {
+				gl.texSubImage2D(
+					gl.TEXTURE_2D, 0,
+					col1, row1,
+					width - col1, 1,
+					gl.RGBA, gl.FLOAT, buf.subarray(0, offset1)
+				);
+				row1++;
+			}
+			if (col2 > 0) {
+				gl.texSubImage2D(
+					gl.TEXTURE_2D, 0,
+					0, row2,
+					col2, 1,
+					gl.RGBA, gl.FLOAT, buf.subarray(offset2, buf.length)
+				);
+			}
+			if (row1 < row2) {
+				gl.texSubImage2D(
+					gl.TEXTURE_2D, 0,
+					0, row1,
+					width, row2 - row1,
+					gl.RGBA, gl.FLOAT, buf.subarray(offset1, offset2)
+				);
+			}
+		}
 	}
 }

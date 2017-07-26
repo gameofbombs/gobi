@@ -3,9 +3,6 @@
 
 namespace gobi.pixi {
 	import runner = gobi.core.runner;
-	import UniformGroupCast = gobi.core.UniformGroupCast;
-	import Matrix = gobi.core.Matrix;
-	import WebGLSystem = gobi.pixi.systems.BaseSystem;
 
 	export namespace webgl {
 		/**
@@ -16,13 +13,20 @@ namespace gobi.pixi {
 		}
 
 		export interface GlobalUniforms {
-			projectionMatrix: Matrix;
+			projectionMatrix: gobi.core.Matrix;
 		}
 	}
 
 	export class WebGLRenderer extends SystemRenderer {
 		gl: WebGLRenderingContext = null;
 		CONTEXT_UID: number = 0;
+
+		/**
+		 * layer marker for layering behaviour
+		 */
+			// TODO: move such things into RenderState, and filters too
+		_activeParentLayer: core.Layer = null;
+
 		runners = {
 			destroy: runner.create0('destroy'),
 			contextChange: runner.create1<WebGLRenderingContext>('contextChange'),
@@ -33,11 +37,11 @@ namespace gobi.pixi {
 			resize: runner.create2<number, number>('resize'),
 		};
 
-		globalUniforms = new UniformGroupCast<webgl.GlobalUniforms>({
-			projectionMatrix: new Matrix(),
+		globalUniforms = new gobi.core.UniformGroupCast<webgl.GlobalUniforms>({
+			projectionMatrix: new gobi.core.Matrix(),
 		}, true);
 
-		allSystems: { [key: string]: WebGLSystem } = {};
+		allSystems: { [key: string]: systems.BaseSystem } = {};
 
 		state = new systems.StateSystem(this);
 		context = new systems.ContextSystem(this);
@@ -114,7 +118,7 @@ namespace gobi.pixi {
 			gobi.utils.sayHello(this.context.webGLVersion === 2 ? 'WebGL 2' : 'WebGL 1');
 		}
 
-		addSystemInstance(_inst: WebGLSystem, name: string): WebGLRenderer {
+		addSystemInstance(_inst: systems.BaseSystem, name: string): WebGLRenderer {
 			if (this.allSystems[name]) {
 				throw new Error(`Whoops! ${name} is already a manager`);
 			}
@@ -170,7 +174,7 @@ namespace gobi.pixi {
 		 * @param {PIXI.Transform} [transform] - A transform to apply to the render texture before rendering.
 		 * @param {boolean} [skipUpdateTransform] - Should we skip the update transform pass?
 		 */
-		render(displayObject: Container, renderTexture?: any, clear?: boolean, transform?: Matrix, skipUpdateTransform?: boolean) {
+		render(displayObject: Container, renderTexture?: any, clear?: boolean, transform?: gobi.core.Matrix, skipUpdateTransform?: boolean) {
 			// can be handy to know!
 			this.renderingToScreen = !renderTexture;
 
@@ -209,6 +213,8 @@ namespace gobi.pixi {
 			this.projection.update(this.screen, this.screen, this.resolution, true);
 
 			this.batch.currentRenderer.start();
+
+			this._activeParentLayer = null;
 
 			displayObject.renderBehaviour.renderWebGL(this, displayObject);
 

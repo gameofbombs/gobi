@@ -1,9 +1,9 @@
 ///ts:ref=BaseSystem
 /// <reference path="./BaseSystem.ts"/> ///ts:ref:generated
+///ts:ref=ObjectRenderer
+/// <reference path="./ObjectRenderer.ts"/> ///ts:ref:generated
 
 namespace gobi.pixi {
-	import GLState = gobi.glCore.GLState;
-
 	export namespace systems {
 		export class BatchSystem extends BaseSystem {
 			emptyRenderer: ObjectRenderer;
@@ -42,34 +42,6 @@ namespace gobi.pixi {
 			reset() {
 				this.setObjectRenderer(this.emptyRenderer);
 			}
-		}
-	}
-
-	export class ObjectRenderer extends systems.BaseSystem {
-		state: GLState = null;
-
-		/**
-		 * Starts the renderer and sets the shader
-		 *
-		 */
-		start() {
-			// set the shader..
-		}
-
-		/**
-		 * Stops the renderer
-		 *
-		 */
-		stop() {
-			this.flush();
-		}
-
-		/**
-		 * Stub method for rendering content and emptying the current batch.
-		 *
-		 */
-		flush() {
-			// flush!
 		}
 	}
 }

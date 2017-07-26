@@ -15,14 +15,28 @@ namespace gobi.pixi {
 			super();
 
 			const collection = new NodeCollection();
-			
+
 			this.parentCollection = collection;
+			collection.stageNode = this;
 			this.updater = collection.updateContext;
-			this.uFlagsStop = -1;
+			// this.uFlagsStop = -1;
 		}
+
+		autoUpdate = true;
+		needUpdate = false;
 
 		updateTransform() {
 			this.updater.flushQueue();
+			this.parentCollection.flushDetached();
+			if (this.autoUpdate || this.needUpdate) {
+				this.parentCollection.layers.updateDisplay(this);
+				this.needUpdate = false;
+			} else {
+				if (this.parentCollection.layers.checkDirty()) {
+					this.parentCollection.layers.updateDisplay(this);
+					this.needUpdate = false;
+				}
+			}
 		}
 	}
 }

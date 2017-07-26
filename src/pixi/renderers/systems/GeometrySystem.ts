@@ -45,6 +45,8 @@ namespace gobi.pixi.systems {
 		 * @private
 		 */
 		contextChange() {
+			this.removeAll(true);
+
 			const gl = this.gl = this.renderer.gl;
 			const anygl = gl as any;
 
@@ -118,10 +120,10 @@ namespace gobi.pixi.systems {
 			let vaos = geometry.glVertexArrayObjects[this.CONTEXT_UID];
 
 			if (!vaos) {
-				geometry.glVertexArrayObjects[this.CONTEXT_UID] = vaos = {};
+				vaos = this.initGeometry(geometry);
 			}
 
-			const vao = vaos[shader.program.id] || this.initGeometryVao(geometry, shader.program);
+			const vao = vaos[shader.program.uniqId] || this.initGeometryVao(geometry, shader.program);
 
 			this._activeGeometry = geometry;
 
@@ -151,7 +153,7 @@ namespace gobi.pixi.systems {
 
 				const glBuffer = buffer._glBuffers[this.CONTEXT_UID];
 
-				if (buffer._updateID !== glBuffer.updateID) {
+				if (glBuffer.updateID !== buffer._updateID) {
 					glBuffer.updateID = buffer._updateID;
 
 					// TODO can cache this on buffer! maybe added a getter / setter?
@@ -239,7 +241,7 @@ namespace gobi.pixi.systems {
 				const buffer = buffers[i];
 
 				if (!buffer._glBuffers[CONTEXT_UID]) {
-					buffer._glBuffers[CONTEXT_UID] = new GLBuffer(gl);
+					this.initBuffer(buffer);
 				}
 			}
 
@@ -254,7 +256,7 @@ namespace gobi.pixi.systems {
 			gl.bindVertexArray(null);
 
 			// add it to the cache!
-			geometry.glVertexArrayObjects[this.CONTEXT_UID][program.id] = vao;
+			geometry.glVertexArrayObjects[this.CONTEXT_UID][program.uniqId] = vao;
 
 			return vao;
 		}
@@ -336,6 +338,95 @@ namespace gobi.pixi.systems {
 			}
 
 			return this;
+		}
+
+		/**
+		 * Its a hack
+		 * Suppose that correct program, geometry and buffer is already bound, and we want to change only attribute start
+		 *
+		 * @param geometry
+		 * @param program
+		 * @param key
+		 * @param start
+		 */
+		hackAttribStart(geometry: Geometry, program: Program, key: string, start: number) {
+			const gl = this.gl;
+
+			const attr = geometry.attributes[key];
+			const glAttr = program.attributeData[key];
+
+			start = start * attr.stride + attr.start;
+
+			if (attr && glAttr) {
+				gl.vertexAttribPointer(glAttr.location,
+					attr.size,
+					attr.type || gl.FLOAT,
+					attr.normalized,
+					attr.stride,
+					start);
+			}
+		}
+
+		managedBuffers: { [key: number]: GeometryBuffer } = {};
+
+		initBuffer(buffer: GeometryBuffer) {
+			const glBuffer = new GLBuffer(this.gl);
+			buffer._glBuffers[this.CONTEXT_UID] = glBuffer;
+
+			this.managedBuffers[buffer.uniqId] = buffer;
+			buffer.onDispose.addListener(this.destroyBuffer);
+
+			return glBuffer;
+		}
+
+		destroyBuffer = (buffer: GeometryBuffer, contextLost: boolean = false) => {
+			const glBuffer = buffer._glBuffers[this.CONTEXT_UID];
+			delete this.managedBuffers[buffer.uniqId];
+			if (glBuffer) {
+				if (!contextLost) {
+					glBuffer.destroy();
+				}
+				buffer.onDispose.removeListener(this.destroyBuffer);
+				delete buffer._glBuffers[this.CONTEXT_UID];
+			}
+		};
+
+		managedGeometries: { [key: number]: Geometry } = {};
+
+		initGeometry(geom: Geometry) {
+			const vaos: { [key: number]: any } = {};
+			geom.glVertexArrayObjects[this.CONTEXT_UID] = vaos;
+
+			this.managedGeometries[geom.uniqId] = geom;
+			geom.onDispose.addListener(this.destroyGeometry);
+
+			return vaos;
+		}
+
+		destroyGeometry = (geom: Geometry, contextLost: boolean = false) => {
+			delete this.managedGeometries[geom.uniqId];
+			const vaos = geom.glVertexArrayObjects[this.CONTEXT_UID];
+
+			if (vaos) {
+				if (!contextLost) {
+					for (let key in vaos) {
+						this.gl.deleteVertexArray(vaos[key]);
+					}
+				}
+				geom.onDispose.removeListener(this.destroyGeometry);
+				delete geom.glVertexArrayObjects[this.CONTEXT_UID];
+			}
+		};
+
+		removeAll(contextLost: boolean = false) {
+			let all = Object.keys(this.managedGeometries);
+			for (let key of all) {
+				this.destroyGeometry(this.managedGeometries[key as any], contextLost);
+			}
+			all = Object.keys(this.managedBuffers);
+			for (let key of all) {
+				this.destroyBuffer(this.managedBuffers[key as any], contextLost);
+			}
 		}
 	}
 }

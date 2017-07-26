@@ -3,6 +3,7 @@
 
 namespace gobi.pixi {
 	import Bounds = gobi.core.Bounds;
+	import CanvasResource = gobi.core.CanvasResource;
 	import trimCanvas = gobi.pixi.textUtils.trimCanvas;
 	const defaultDestroyOptions = {
 		texture: true,
@@ -42,8 +43,8 @@ namespace gobi.pixi {
 		 * @param {object|PIXI.TextStyle} [style] - The style parameters
 		 * @param {HTMLCanvasElement} [canvas] - The canvas element for drawing text
 		 */
-		constructor(text: string, style?: TextStyleOptions, canvas?: HTMLCanvasElement) {
-			super();
+		constructor(node: Container, text: string, style?: TextStyleOptions, canvas?: HTMLCanvasElement) {
+			super(node);
 
 			canvas = canvas || document.createElement('canvas');
 
@@ -326,10 +327,11 @@ namespace gobi.pixi {
 
 			baseTexture.resolution = this.resolution;
 
-			baseTexture.setRealSize(canvas.width, canvas.height);
-
+			texture.baseTexture.width = this.canvas.width / this.resolution;
+			texture.baseTexture.height = this.canvas.height / this.resolution;
 			texture.trim.width = texture._frame.width = baseTexture.width;
 			texture.trim.height = texture._frame.height = baseTexture.height;
+
 			texture.trim.x = -padding;
 			texture.trim.y = -padding;
 
@@ -339,7 +341,7 @@ namespace gobi.pixi {
 			// call sprite onTextureUpdate to update scale if _width or _height were set
 			this._onTextureUpdate();
 
-			baseTexture.onUpdate.emit(baseTexture);
+			baseTexture.update();
 
 			this.dirty = false;
 		}
@@ -394,7 +396,7 @@ namespace gobi.pixi {
 			const arr = style.fill as Array<string>;
 
 			// cocoon on canvas+ cannot generate textures, so use the first colour instead
-			if ((navigator as any).isCocoonJS) {
+			if (navigator.isCocoonJS) {
 				return style.fill[0];
 			}
 

@@ -1,5 +1,7 @@
 // TODO: somehow it breaks everything
 // import {EventEmitter} from 'eventemitter3';
+///ts:ref=IRenderer
+/// <reference path="../../interaction/IRenderer.ts"/> ///ts:ref:generated
 
 namespace gobi.pixi {
 
@@ -32,7 +34,7 @@ namespace gobi.pixi {
 
 	const fourOnes = [1, 1, 1, 1];
 
-	export abstract class SystemRenderer {
+	export abstract class SystemRenderer implements interaction.IRenderer {
 		options: IRendererOptions;
 		type: RENDERER_TYPE;
 		screen: Rectangle;

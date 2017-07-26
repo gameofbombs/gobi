@@ -106,7 +106,7 @@ namespace gobi.core {
          * @param {PIXI.Point} [newPos] - The point that the new position is assigned to (allowed to be same as input)
          * @return {PIXI.Point} The new point, transformed through this matrix
          */
-        apply(pos: IPoint, newPos: Point): Point {
+        apply(pos: IPoint, newPos: IPoint): IPoint {
             newPos = newPos || new Point();
 
             const x = pos.x;
@@ -126,7 +126,7 @@ namespace gobi.core {
          * @param {PIXI.Point} [newPos] - The point that the new position is assigned to (allowed to be same as input)
          * @return {PIXI.Point} The new point, inverse-transformed through this matrix
          */
-        applyInverse(pos: IPoint, newPos: Point): Point {
+        applyInverse(pos: IPoint, newPos: IPoint): IPoint {
             newPos = newPos || new Point();
 
             const id = 1 / ((this.a * this.d) + (this.c * -this.b));
