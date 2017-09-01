@@ -2,6 +2,8 @@
 // import canUploadSameBuffer from './utils/canUploadSameBuffer';
 
 namespace gobi.settings {
+	export let PREFER_WEBGL_2 = false;
+
 	/**
 	 * If set to true WebGL will attempt make textures mimpaped by default.
 	 * Mipmapping will only succeed if the base texture uploaded has power of two dimensions.

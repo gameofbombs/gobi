@@ -795,12 +795,16 @@ namespace gobi.url {
 	}
 
 	export const page = new Url();
-	page.protocol = window.location.protocol;
-	page.hostname = window.location.hostname;
-	page.pathname = window.location.pathname;
+	if (typeof window !== 'undefined') {
+		page.protocol = window.location.protocol;
+		page.hostname = window.location.hostname;
+		page.pathname = window.location.pathname;
+	}
 
 	export const root = new Url();
-	root.protocol = window.location.protocol;
-	root.hostname = window.location.hostname;
-	root.pathname = '/';
+	if (typeof window !== 'undefined') {
+		root.protocol = window.location.protocol;
+		root.hostname = window.location.hostname;
+		root.pathname = '/';
+	}
 }

@@ -49,6 +49,8 @@ namespace gobi.pixi.systems {
 			if (gl.isContextLost() && gl.getExtension('WEBGL_lose_context')) {
 				gl.getExtension('WEBGL_lose_context').restoreContext();
 			}
+
+			this.getExtensions();
 		}
 
 		initFromContext(gl: WebGLRenderingContext) {

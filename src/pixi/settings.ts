@@ -3,7 +3,8 @@
 
 namespace gobi.pixi {
 	export class settings {
-		static PREFER_WEBGL_2 = true;
+		static get PREFER_WEBGL_2() { return gobi.settings.PREFER_WEBGL_2 };
+		static set PREFER_WEBGL_2(value) { gobi.settings.PREFER_WEBGL_2 = value };
 
 		/**
 		 * Target frames per millisecond.

@@ -13,6 +13,8 @@ namespace gobi.pixi.systems {
 	import VertexArrayObject = gobi.glCore.VertexArrayObject;
 	const byteSizeMap: any = {5126: 4, 5123: 2, 5121: 1};
 
+	let FALLBACK_VAO_ID = 0;
+
 	//TODO : VAO for webgl1
 
 	/**
@@ -25,18 +27,21 @@ namespace gobi.pixi.systems {
 		_activeVao: VertexArrayObject = null;
 		hasVao = true;
 		hasInstance = true;
+		hasVaoInstance = true;
 
 		gl: WebGLRenderingContext;
 		CONTEXT_UID: number;
+
+		//fallback
+		_fallbackDivisors: Array<number> = [];
+		_fallbackAttributes: Array<number> = [];
+		_fallbackMaxLocation: number = 0;
 
 		/**
 		 * @param {PIXI.WebGLRenderer} renderer - The renderer this System works for.
 		 */
 		constructor(renderer: WebGLRenderer) {
 			super(renderer);
-
-			this.hasVao = true;
-			this.hasInstance = true;
 		}
 
 		/**
@@ -47,13 +52,21 @@ namespace gobi.pixi.systems {
 		contextChange() {
 			this.removeAll(true);
 
+			this._activeVao = null;
+			this._activeGeometry = null;
+			this._fallbackDivisors.length = 0;
+			this._fallbackAttributes.length = 0;
+			this._fallbackMaxLocation = 0;
+
 			const gl = this.gl = this.renderer.gl;
 			const anygl = gl as any;
 
 			this.CONTEXT_UID = this.renderer.CONTEXT_UID;
 
 			// webgl2
-			if (!anygl.createVertexArray) {
+			if (!anygl.createVertexArray || anygl.hackedVao) {
+				// this.hasVaoInstance = false;
+
 				// webgl 1!
 				let nativeVaoExtension = this.renderer.context.extensions.vertexArrayObject;
 
@@ -74,6 +87,7 @@ namespace gobi.pixi.systems {
 				else {
 					this.hasVao = false;
 					anygl.createVertexArray = () => {
+						return 1;
 						// empty
 					};
 
@@ -85,9 +99,10 @@ namespace gobi.pixi.systems {
 						// empty
 					};
 				}
+				anygl.hackedVao = true;
 			}
 
-			if (!anygl.vertexAttribDivisor) {
+			if (!anygl.vertexAttribDivisor || anygl.hackedInstanced) {
 				const instanceExt = gl.getExtension('ANGLE_instanced_arrays');
 
 				if (instanceExt) {
@@ -99,6 +114,8 @@ namespace gobi.pixi.systems {
 
 					anygl.drawArraysInstanced = (a: any, b: any, c: any, d: any) =>
 						instanceExt.drawArraysInstancedANGLE(a, b, c, d);
+
+					anygl.hackedInstanced = true;
 				}
 			}
 		}
@@ -245,6 +262,12 @@ namespace gobi.pixi.systems {
 				}
 			}
 
+			if (!this.hasVao) {
+				++FALLBACK_VAO_ID;
+				geometry.glVertexArrayObjects[this.CONTEXT_UID][program.uniqId] = FALLBACK_VAO_ID;
+				return FALLBACK_VAO_ID;
+			}
+
 			// TODO - maybe make this a data object?
 			// lets wait to see if we need to first!
 			const vao = gl.createVertexArray();
@@ -274,6 +297,13 @@ namespace gobi.pixi.systems {
 
 			let lastBuffer = null;
 
+			let maxLocation = 0;
+
+			const fallbackDivisors = this._fallbackDivisors;
+			const fallbackAttributes = this._fallbackAttributes;
+			const hasVao = this.hasVao;
+			const hasVaoInstance = this.hasVaoInstance;
+
 			// add a new one!
 			for (const j in attributes) {
 				const attribute = attributes[j];
@@ -288,10 +318,23 @@ namespace gobi.pixi.systems {
 					}
 
 					const location = program.attributeData[j].location;
+					maxLocation = Math.max(maxLocation, location);
+
+					while (location >= fallbackDivisors.length) {
+						fallbackDivisors.push(0);
+						fallbackAttributes.push(0);
+					}
 
 					// TODO introduce state again
 					// we can optimise this for older devices that have no VAOs
-					gl.enableVertexAttribArray(location);
+					if (hasVao) {
+						gl.enableVertexAttribArray(location);
+					} else {
+						if (fallbackAttributes[location] === 0) {
+							gl.enableVertexAttribArray(location);
+						}
+						fallbackAttributes[location] = 2;
+					}
 
 					gl.vertexAttribPointer(location,
 						attribute.size,
@@ -300,17 +343,42 @@ namespace gobi.pixi.systems {
 						attribute.stride,
 						attribute.start);
 
-					if (attribute.instanceDivisor) {
-						// TODO calculate instance count based of this...
-						if (this.hasInstance) {
+					if (hasVaoInstance) {
+						if (attribute.instanceDivisor) {
 							gl.vertexAttribDivisor(location, attribute.instanceDivisor);
 						}
-						else {
-							throw new Error('geometry error, GPU Instancing is not supported on this device');
+					} else {
+
+						if (attribute.instanceDivisor) {
+							// TODO calculate instance count based of this...
+							if (this.hasInstance) {
+								gl.vertexAttribDivisor(location, attribute.instanceDivisor);
+								fallbackDivisors[location] = attribute.instanceDivisor;
+							}
+							else {
+								throw new Error('geometry error, GPU Instancing is not supported on this device');
+							}
+						} else {
+							if (fallbackDivisors[location] !== 0) {
+								gl.vertexAttribDivisor(location, 0);
+								fallbackDivisors[location] = 0;
+							}
 						}
 					}
 				}
 			}
+
+			if (!hasVao) {
+				for (let i = Math.max(this._fallbackMaxLocation, maxLocation); i >= 0; --i) {
+					if (fallbackAttributes[i] === 1) {
+						gl.disableVertexAttribArray(i);
+						fallbackAttributes[i] = 0;
+					} else if (fallbackAttributes[i] === 2) {
+						fallbackAttributes[i] = 1;
+					}
+				}
+			}
+			this._fallbackMaxLocation = maxLocation;
 		}
 
 		draw(type: number, size: number, start?: number, instanceCount?: number) {
@@ -409,8 +477,10 @@ namespace gobi.pixi.systems {
 
 			if (vaos) {
 				if (!contextLost) {
-					for (let key in vaos) {
-						this.gl.deleteVertexArray(vaos[key]);
+					if (!this.hasVao) {
+						for (let key in vaos) {
+							this.gl.deleteVertexArray(vaos[key]);
+						}
 					}
 				}
 				geom.onDispose.removeListener(this.destroyGeometry);

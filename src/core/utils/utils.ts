@@ -187,7 +187,7 @@ namespace gobi.utils {
 	 *
 	 * @memberof PIXI.utils
 	 * @function getSvgSize
-	 * @param {string} svgString - a serialized svg element
+	 * @param {string} svgString - a serialized svg element`
 	 * @return {Size|undefined} image extension
 	 */
 	export function getSvgSize(svgString: string): any {

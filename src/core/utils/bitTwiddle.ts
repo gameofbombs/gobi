@@ -16,9 +16,6 @@ namespace gobi.utils {
 		return v + 1;
 	}
 
-
-	//bit twiddle is here
-
 	export function log2(v: number) {
 		let r: number, shift: number;
 		r = +(v > 0xFFFF) << 4;

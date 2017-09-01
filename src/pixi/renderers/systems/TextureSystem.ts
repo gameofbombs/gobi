@@ -288,9 +288,6 @@ namespace gobi.pixi.systems {
 
 		//TODO: this is needed for context loss
 		removeAll(contextLost: boolean = false) {
-			for (let i = 0; i < this.boundTextures.length; i++) {
-				this.boundTextures[i] = null;
-			}
 			let all = Object.keys(this.managedTextures);
 			for (let key of all) {
 				this.destroyTexture(this.managedTextures[key as any], contextLost);

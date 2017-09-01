@@ -368,9 +368,7 @@ namespace gobi.core {
          * @static
          * @const
          */
-        static get IDENTITY() {
-            return new Matrix();
-        }
+        static readonly IDENTITY = new Matrix();
 
         /**
          * A temp matrix
@@ -378,8 +376,6 @@ namespace gobi.core {
          * @static
          * @const
          */
-        static get TEMP_MATRIX() {
-            return new Matrix();
-        }
+        static readonly TEMP_MATRIX = new Matrix();
     }
 }
