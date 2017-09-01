@@ -472,7 +472,7 @@ namespace gobi.url.punycode {
 	 * @type Object
 	 */
 	export namespace ucs2 {
-		export const encode = ucs2encode;
-		export const decode = ucs2decode;
+		export const encode : (codePoints: Array<number>) => string = ucs2encode;
+		export const decode : (str: string) => Array<number> = ucs2decode;
 	}
 }

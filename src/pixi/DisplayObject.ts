@@ -40,7 +40,7 @@ namespace gobi.pixi {
 		}
 	}
 
-	export const defaultNodeRenderer = new DefaultNodeRenderer();
+	export const defaultNodeRenderer: gobi.core.INodeRenderer = new DefaultNodeRenderer();
 
 	export abstract class DisplayObject implements IDisplayObject {
 		//TODO: move it to Node, so global visible and local visible

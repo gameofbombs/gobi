@@ -8,7 +8,7 @@ namespace gobi.interaction {
 	const hitTestEvent = new Event();
 	hitTestEvent.data = new Pointer();
 
-	type InternalCallback = (event: Event, target: core.Node, hit: boolean) => void;
+	export type InternalCallback = (event: Event, target: core.Node, hit: boolean) => void;
 
 	/**
 	 * The interaction manager deals with mouse, touch and pointer events. Any DisplayObject can be interactive

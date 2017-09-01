@@ -1,5 +1,5 @@
 namespace GlobalInstanceChecker {
-	type ItemType = {getIsValid:()=>boolean, getName:()=>string, uniqId:number};
+	export type ItemType = {getIsValid:()=>boolean, getName:()=>string, uniqId:number};
 	var set:{[key:number]:ItemType} = {};
 	
 	export function watch(item:ItemType) {

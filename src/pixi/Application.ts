@@ -18,7 +18,7 @@ namespace gobi.pixi {
 	 * @class
 	 * @memberof PIXI
 	 */
-	export default class Application {
+	export class Application {
 		_options: any;
 		renderer: WebGLRenderer;
 		stage: Stage;

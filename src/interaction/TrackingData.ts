@@ -1,5 +1,5 @@
 namespace gobi.interaction {
-	enum FLAGS {
+	export enum FLAGS {
 		NONE = 0,
 		OVER = 1 << 0,
 		LEFT_DOWN = 1 << 1,

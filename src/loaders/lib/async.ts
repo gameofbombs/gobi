@@ -65,7 +65,7 @@ namespace gobi.loaders.lib.async {
 
 	}
 
-	class Item<TaskData> {
+	export class Item<TaskData> {
 		data: TaskData;
 		callback: Function;
 
